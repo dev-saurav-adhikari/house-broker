@@ -1,0 +1,7 @@
+﻿services:
+  housebroker.api:
+    image: housebroker.api
+    build:
+      context: .
+      dockerfile: HouseBroker.API/Dockerfile
+

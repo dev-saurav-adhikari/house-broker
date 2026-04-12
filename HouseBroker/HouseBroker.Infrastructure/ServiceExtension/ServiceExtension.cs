@@ -1,9 +1,11 @@
+using System;
 using HouseBroker.Application.Interfaces.IRepositories;
 using HouseBroker.Application.Interfaces.IServices;
 using HouseBroker.Infrastructure.Persistence;
 using HouseBroker.Infrastructure.Repositories;
 using HouseBroker.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,19 +15,20 @@ public static class ServiceExtension
 {
     public static void AddServices(this IServiceCollection services, IConfiguration configuration)
     {
-        #region  add repositories
+        #region add repositories
+
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
-        
-        
+
         #endregion
-        
+
         #region add services
+
         services.AddScoped<IAuthService, AuthService>();
 
         #endregion
     }
 
-    public static void AddIdentity(this IServiceCollection services, IConfiguration configuration)
+    public static void IdentityConfiguration(this IServiceCollection services)
     {
         services.AddIdentity<IdentityUser<long>, IdentityRole<long>>(options =>
             {
@@ -47,5 +50,11 @@ public static class ServiceExtension
             .AddEntityFrameworkStores<HouseBrokerDbContext>()
             .AddDefaultTokenProviders();
     }
-    
+
+    public static void DatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddDbContext<HouseBrokerDbContext>(opt =>
+            opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                p => p.MigrationsAssembly("HouseBroker.Infrastructure")));
+    }
 }

@@ -35,6 +35,8 @@ public static class ServiceExtension
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPropertyService, PropertyService>();
+        services.AddScoped<IProvinceService, ProvinceService>();
+        services.AddScoped<IDistrictService, DistrictService>();
         services.AddScoped<IFileService, FileService>();
 
         #endregion

@@ -8,8 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HouseBroker.Infrastructure.Services;
 
-public class PropertyService(
-    IPropertyRepository _propertyRepository,
+public class PropertyService( 
+    IUnitOfWork _unitOfWork,
     UserManager<IdentityUser<long>> _userManager,
     IFileService _fileService, 
     IHttpContextAccessor _httpContextAccessor) : IPropertyService
@@ -21,7 +21,7 @@ public class PropertyService(
         var request = _httpContextAccessor.HttpContext?.Request;
         var baseUrl = $"{request.Scheme}://{request.Host}";
         // fetch all available the properties
-        var allProperties = _propertyRepository.FindByCondition(p => p.IsAvailable);
+        var allProperties = _unitOfWork.PropertyRepository.FindByCondition(p => p.IsAvailable);
 
         // select distinct broker id from available properties
         var brokerIds = allProperties.Select(p => p.BrokerId).Distinct();
@@ -50,6 +50,7 @@ public class PropertyService(
                 Title = p.Title,
                 BrokerId = p.BrokerId,
                 BrokerName = r.Email,
+                EstimatedCommission =  p.EstimatedCommission,
             }).ToListAsync();
     }
 
@@ -59,7 +60,7 @@ public class PropertyService(
         string imageUrl = await _fileService.SaveFileAsync(property.ImageFile);
         
         // add property
-        await _propertyRepository.AddAsync(new Property
+        var newProperty = new Property
         {
             Description = property.Description,
             PropertyType = property.PropertyType,
@@ -73,8 +74,29 @@ public class PropertyService(
             Title = property.Title,
             CreatedBy = userId,
             BrokerId = userId,
-            IsAvailable = true
-        });
-        await _propertyRepository.SaveChangesAsync();
+            IsAvailable = true,
+            EstimatedCommission =  await CommissionCalculation(property.Price)
+            
+        };
+        await _unitOfWork.PropertyRepository.AddAsync(newProperty);
+        await _unitOfWork.PropertyRepository.SaveChangesAsync();
+    }
+
+    private async Task<decimal> CommissionCalculation(decimal price)
+    {
+        
+        if (price <= 0) return 0;
+
+        var tiers = await _unitOfWork.CommissionRepository.GetAll();
+
+        // Find the tier where Price is GREATER than the Min and LESS THAN OR EQUAL to the Max
+        var matchingTier = tiers.FirstOrDefault(t => 
+            (price > t.MinimumAmount || (t.MinimumAmount == 0 && price >= 0)) && 
+            (t.MaximumAmount <= 0 || price <= (decimal)t.MaximumAmount)); // Note the <= here
+
+        if (matchingTier == null) return 0;
+
+        var commission = price * (matchingTier.Rate / 100);
+        return Math.Round(commission, 2, MidpointRounding.AwayFromZero);
     }
 }

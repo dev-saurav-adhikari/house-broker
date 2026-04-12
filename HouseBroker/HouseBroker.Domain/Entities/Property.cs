@@ -26,6 +26,9 @@ public class Property : BaseEntity
     public long BrokerId { get; set; }
     
     public bool IsAvailable { get; set; }
+    
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal EstimatedCommission { get; set; }
 
     public virtual Province Province { get; set; }
     public virtual District District { get; set; }

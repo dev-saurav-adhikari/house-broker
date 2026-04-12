@@ -28,7 +28,6 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
     public async Task<List<T>> GetAll(bool asNoTracking = false)
     {
         return asNoTracking ? await _dbSet.AsNoTracking().ToListAsync() : await _dbSet.ToListAsync();
-        ;
     }
 
     public IQueryable<T> FindByCondition(Expression<Func<T, bool>> condition, bool asNoTracking = false)

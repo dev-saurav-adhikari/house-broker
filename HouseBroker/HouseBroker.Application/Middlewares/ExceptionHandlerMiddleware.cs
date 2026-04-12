@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace HouseBroker.Application.Middlewares;
 
-public class ExceptionHandlerMiddlewareMiddleware(RequestDelegate next)
+public class ExceptionHandlerMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -41,15 +41,10 @@ public class ExceptionHandlerMiddlewareMiddleware(RequestDelegate next)
             errors: errorMessages,
             statusCode: statusCode
         );
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)statusCode;
         await context.Response.WriteAsync(JsonSerializer.Serialize(apiResponse));
     }
     
 }
 
-public static class ExceptionHandlerMiddlewareMiddlewareExtensions
-{
-    public static IApplicationBuilder UseExceptionHandlerMiddleware(this IApplicationBuilder builder)
-    {
-        return builder.UseMiddleware<ExceptionHandlerMiddlewareMiddleware>();
-    }
-}

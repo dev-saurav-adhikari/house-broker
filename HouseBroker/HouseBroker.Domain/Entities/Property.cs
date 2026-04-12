@@ -25,6 +25,7 @@ public class Property : BaseEntity
     public PropertyTypeEnum PropertyType { get; set; } 
     public long BrokerId { get; set; }
     
+    public bool IsAvailable { get; set; }
 
     public virtual Province Province { get; set; }
     public virtual District District { get; set; }

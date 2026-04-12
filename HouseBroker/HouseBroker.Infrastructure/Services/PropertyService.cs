@@ -8,21 +8,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HouseBroker.Infrastructure.Services;
 
-public class PropertyService( 
+public class PropertyService(
     IUnitOfWork _unitOfWork,
     UserManager<IdentityUser<long>> _userManager,
-    IFileService _fileService, 
+    IFileService _fileService,
     IHttpContextAccessor _httpContextAccessor) : IPropertyService
 
-    
+
 {
-    public async Task<List<PropertyDto>> GetAllProperties()
+    public async Task<Pagination<PropertyDto>> GetAllProperties(PropertyFilterDto filter)
     {
         var request = _httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request.Scheme}://{request.Host}";
+        var baseUrl = $"{request?.Scheme}://{request.Host}";
+        
         // fetch all available the properties
-        var allProperties = _unitOfWork.PropertyRepository.FindByCondition(p => p.IsAvailable);
-
+        var allProperties = _unitOfWork.PropertyRepository.FindByCondition(p => p.IsAvailable &&
+            (string.IsNullOrWhiteSpace(filter.Search) || p.Title.Contains(filter.Search) ||
+             p.Description.Contains(filter.Search))
+            && (filter.ProvinceId == null || filter.ProvinceId == 0 || p.ProvinceId == filter.ProvinceId)
+            && (filter.DistrictId == null || filter.DistrictId == 0 || p.DistrictId == filter.DistrictId)
+            && (filter.WardNumber == null || filter.WardNumber == 0 || p.WardNumber == filter.WardNumber)
+            && (filter.MinPrice == null || filter.MinPrice == 0 || p.Price >= filter.MinPrice)
+            && (filter.MaxPrice == null || filter.MaxPrice == 0 || p.Price <= filter.MaxPrice)
+            && (filter.PropertyType == null || p.PropertyType == filter.PropertyType));
+        
         // select distinct broker id from available properties
         var brokerIds = allProperties.Select(p => p.BrokerId).Distinct();
 
@@ -31,7 +40,7 @@ public class PropertyService(
             .Where(u => brokerIds.Contains(u.Id))
             .Select(p => new { p.Id, p.Email, p.PhoneNumber });
 
-        return await (from p in allProperties
+        var query =  (from p in allProperties
             join r in brokers on p.BrokerId equals r.Id
             select new PropertyDto
             {
@@ -39,8 +48,8 @@ public class PropertyService(
                 Description = p.Description,
                 PropertyType = p.PropertyType,
                 Price = p.Price,
-                ImageUrl = string.IsNullOrEmpty(p.ImageUrl) 
-                    ? null 
+                ImageUrl = string.IsNullOrEmpty(p.ImageUrl)
+                    ? null
                     : $"{baseUrl}{p.ImageUrl}",
                 ProvinceId = p.ProvinceId,
                 Municipality = p.Municipality,
@@ -50,15 +59,16 @@ public class PropertyService(
                 Title = p.Title,
                 BrokerId = p.BrokerId,
                 BrokerName = r.Email,
-                EstimatedCommission =  p.EstimatedCommission,
-            }).ToListAsync();
+                EstimatedCommission = p.EstimatedCommission,
+            });//.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToListAsync();
+        return new Pagination<PropertyDto>(query, filter.PageNumber, filter.PageSize);
     }
 
     public async Task InsertProperty(InsertPropertyDto property, long userId)
     {
         // upload file 
         string imageUrl = await _fileService.SaveFileAsync(property.ImageFile);
-        
+
         // add property
         var newProperty = new Property
         {
@@ -75,8 +85,7 @@ public class PropertyService(
             CreatedBy = userId,
             BrokerId = userId,
             IsAvailable = true,
-            EstimatedCommission =  await CommissionCalculation(property.Price)
-            
+            EstimatedCommission = await CommissionCalculation(property.Price)
         };
         await _unitOfWork.PropertyRepository.AddAsync(newProperty);
         await _unitOfWork.PropertyRepository.SaveChangesAsync();
@@ -84,15 +93,14 @@ public class PropertyService(
 
     private async Task<decimal> CommissionCalculation(decimal price)
     {
-        
         if (price <= 0) return 0;
 
         var tiers = await _unitOfWork.CommissionRepository.GetAll();
 
-        // Find the tier where Price is GREATER than the Min and LESS THAN OR EQUAL to the Max
-        var matchingTier = tiers.FirstOrDefault(t => 
-            (price > t.MinimumAmount || (t.MinimumAmount == 0 && price >= 0)) && 
-            (t.MaximumAmount <= 0 || price <= (decimal)t.MaximumAmount)); // Note the <= here
+        // find the tier where price is greater than the min and less or equal to the max
+        var matchingTier = tiers.FirstOrDefault(t =>
+            (price > t.MinimumAmount || (t.MinimumAmount == 0 && price >= 0)) &&
+            (t.MaximumAmount <= 0 || price <= (decimal)t.MaximumAmount));
 
         if (matchingTier == null) return 0;
 

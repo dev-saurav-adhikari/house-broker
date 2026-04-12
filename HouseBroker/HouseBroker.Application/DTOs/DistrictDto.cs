@@ -18,5 +18,6 @@ public class UpsertDistrictDto
     public string Name { get; set; } = string.Empty;
 
     [Required]
+    [Range(0, long.MaxValue)]
     public long ProvinceId { get; set; }
 }

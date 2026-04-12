@@ -22,7 +22,7 @@ public class UnitOfWork (IServiceProvider _serviceProvider, HouseBrokerDbContext
             }
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             if (_dbContext.Database.CurrentTransaction != null)
             {

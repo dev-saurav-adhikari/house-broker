@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using HouseBroker.Application.Common;
 
 namespace HouseBroker.Application.Interfaces.IRepositories;
 

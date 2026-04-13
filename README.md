@@ -101,7 +101,7 @@ Docker is a platform that uses containerization to package an application and al
 1. **Open Terminal:** Navigate to the directory containing the `compose.yml` file.
 2. **Launch Services:**
    ```bash
-   docker compose up --build
+   docker compose up -d --build
    ```
 3. **Wait for Services:** Wait for the containers to be built and started.
 4. **Access API:** Once running, you can access the application at: [http://localhost:5107/openapi/v1.json](http://localhost:5107/openapi/v1.json)

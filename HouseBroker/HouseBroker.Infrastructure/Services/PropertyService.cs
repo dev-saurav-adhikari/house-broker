@@ -42,18 +42,23 @@ public class PropertyService(
             && (filter.MaxPrice == null || filter.MaxPrice == 0 || p.Price <= filter.MaxPrice)
             && (filter.PropertyType == null || p.PropertyType == filter.PropertyType));
         
-        // select distinct broker id from available properties
-        var brokerIds = allProperties.Select(p => p.BrokerId).Distinct();
+        // query execution and pagination (fetch properties first)
+        var propertyPagination = new Pagination<Property>(allProperties, filter.PageNumber, filter.PageSize);
+        
+        // select distinct broker ids from the current page
+        var currentBrokerIds = propertyPagination.Items.Select(p => p.BrokerId).Distinct().ToList();
 
-        // fetch detail information of broker
-        var brokers = _userManager.Users
-            .Where(u => brokerIds.Contains(u.Id))
-            .Select(p => new { p.Id, p.Email, p.PhoneNumber });
+        // fetch detail information of broker for current page only
+        var brokers = await _userManager.Users
+            .Where(u => currentBrokerIds.Contains(u.Id))
+            .Select(p => new { p.Id, p.Email, p.PhoneNumber })
+            .ToListAsync();
 
-        // query build
-        var query =  (from p in allProperties
-            join r in brokers on p.BrokerId equals r.Id
-            select new PropertyDetailWithBrokerInfoDto
+        // combine property and broker information
+        var resultItems = propertyPagination.Items.Select(p =>
+        {
+            var r = brokers.FirstOrDefault(b => b.Id == p.BrokerId);
+            return new PropertyDetailWithBrokerInfoDto
             {
                 Id = p.Id,
                 Description = p.Description,
@@ -69,13 +74,15 @@ public class PropertyService(
                 LandMark = p.LandMark,
                 Title = p.Title,
                 BrokerId = p.BrokerId,
-                BrokerName = r.Email,
+                BrokerName = r?.Email ?? "Unknown",
                 EstimatedCommission = p.EstimatedCommission,
-                BrokerEmail = r.Email,
-                BrokerPhone = r.PhoneNumber,
-            });
-        // query execution and pagination
-        var pagination = new Pagination<PropertyDetailWithBrokerInfoDto>(query, filter.PageNumber, filter.PageSize);
+                BrokerEmail = r?.Email ?? string.Empty,
+                BrokerPhone = r?.PhoneNumber ?? string.Empty,
+            };
+        }).ToList();
+
+        var pagination = new Pagination<PropertyDetailWithBrokerInfoDto>(resultItems, propertyPagination.TotalCount, 
+            propertyPagination.CurrentPage, propertyPagination.PageSize);
         
         // store under the versioned key (expires in 10 mins, old versions naturally expire too)
         await _cacheService.SetAsync(cacheKey, pagination, TimeSpan.FromMinutes(10));

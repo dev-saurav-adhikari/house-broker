@@ -40,6 +40,7 @@ public class PropertyService(
             .Where(u => brokerIds.Contains(u.Id))
             .Select(p => new { p.Id, p.Email, p.PhoneNumber });
 
+        // query build
         var query =  (from p in allProperties
             join r in brokers on p.BrokerId equals r.Id
             select new PropertyDto
@@ -60,7 +61,8 @@ public class PropertyService(
                 BrokerId = p.BrokerId,
                 BrokerName = r.Email,
                 EstimatedCommission = p.EstimatedCommission,
-            });//.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToListAsync();
+            });
+        // query execution and pagination
         return new Pagination<PropertyDto>(query, filter.PageNumber, filter.PageSize);
     }
 
@@ -85,8 +87,9 @@ public class PropertyService(
             CreatedBy = userId,
             BrokerId = userId,
             IsAvailable = true,
-            EstimatedCommission = await CommissionCalculation(property.Price)
+            EstimatedCommission = await CommissionCalculation(property.Price) // commission calculation
         };
+        // adding new property
         await _unitOfWork.PropertyRepository.AddAsync(newProperty);
         await _unitOfWork.PropertyRepository.SaveChangesAsync();
     }

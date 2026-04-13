@@ -84,6 +84,7 @@ public class PropertyService(
         var pagination = new Pagination<PropertyDetailWithBrokerInfoDto>(resultItems, propertyPagination.TotalCount, 
             propertyPagination.CurrentPage, propertyPagination.PageSize);
         
+        // store under the versioned key (expires in 10 mins, old versions naturally expire too)
         await _cacheService.SetAsync(cacheKey, pagination, TimeSpan.FromMinutes(10));
         
         return pagination;
@@ -91,8 +92,8 @@ public class PropertyService(
 
     public async Task InsertProperty(InsertPropertyDetailDto propertyDetail, long userId)
     {
-        var isLocationDetailValid = await _unitOfWork.DistrictRepository.FindByCondition(p =>
-            p.Id == propertyDetail.DistrictId && p.ProvinceId == propertyDetail.ProvinceId).AnyAsync();
+        var isLocationDetailValid = _unitOfWork.DistrictRepository.FindByCondition(p =>
+            p.Id == propertyDetail.DistrictId && p.ProvinceId == propertyDetail.ProvinceId).Any();
         if (!isLocationDetailValid) throw new BadRequestException("Invalid province and district information!");
         // upload file 
         string imageUrl = await _fileService.SaveFileAsync(propertyDetail.ImageFile);
@@ -129,17 +130,8 @@ public class PropertyService(
         var property = await _unitOfWork.PropertyRepository.GetByIdAsync(id);
         if (property == null) throw new NotFoundException("Property not found");
         if (property.BrokerId != userId) throw new UnauthorizedAccessException("You are not authorized to update this property");
-
-        // validate province and district
-        var provinceId = propertyDto.ProvinceId ?? property.ProvinceId;
-        var districtId = propertyDto.DistrictId ?? property.DistrictId;
-
-        var isLocationDetailValid = await _unitOfWork.DistrictRepository
-            .FindByCondition(p => p.Id == districtId && p.ProvinceId == provinceId)
-            .AnyAsync();
-
-        if (!isLocationDetailValid) throw new BadRequestException("Invalid province and district information!");
-
+        
+        
         // data mapping 
         property.Title = propertyDto.Title ?? property.Title;
         property.Description = propertyDto.Description ?? property.Description;

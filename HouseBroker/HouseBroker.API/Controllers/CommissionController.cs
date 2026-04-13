@@ -11,12 +11,18 @@ namespace HouseBroker.API.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
+/**
+ * CommissionController is responsible for managing commission settings and calculations
+ */
 public class CommissionController(ICommissionService _commissionService) : ControllerBase
 {
     private long UserId => User.FindFirstValue("Id") != null ? long.Parse(User.FindFirstValue("Id")??string.Empty) : 0;
 
+    /// <summary>
+    /// Get all commission settings
+    /// </summary>
+    /// <returns> List of commission settings wrapped by APIResponse</returns>
     [HttpGet]
-    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var commissions = await _commissionService.GetAllAsync();
@@ -24,7 +30,6 @@ public class CommissionController(ICommissionService _commissionService) : Contr
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetById(long id)
     {
         var commission = await _commissionService.GetByIdAsync(id);
@@ -32,6 +37,11 @@ public class CommissionController(ICommissionService _commissionService) : Contr
         return Ok(new APIResponse(commission));
     }
 
+    /// <summary>
+    /// Create a new commission setting
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns> Success message wrapped by APIResponse</returns>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] UpsertCommissionDto dto)
     {
@@ -39,6 +49,12 @@ public class CommissionController(ICommissionService _commissionService) : Contr
         return Ok(new APIResponse("Commission setting created successfully"));
     }
 
+    /// <summary>
+    /// Update a commission setting
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="dto"></param>
+    /// <returns> Success message wrapped by APIResponse</returns>
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(long id, [FromBody] UpsertCommissionDto dto)
     {
@@ -46,6 +62,11 @@ public class CommissionController(ICommissionService _commissionService) : Contr
         return Ok(new APIResponse("Commission setting updated successfully"));
     }
 
+    /// <summary>
+    /// Delete a commission setting
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns> Success message wrapped by APIResponse</returns>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(long id)
     {

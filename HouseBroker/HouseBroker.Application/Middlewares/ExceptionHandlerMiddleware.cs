@@ -23,6 +23,14 @@ public class ExceptionHandlerMiddleware(RequestDelegate next)
         }
     }
 
+    /// <summary>
+    /// Handle exception and write httpcontext response error message in the APIResponse format.
+    /// Currently, this function only handle two types of exceptions: BadRequestException and UnauthorizedAccessException.
+    /// For any other exception, it will return InternalServerError.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="exception"></param>
+    /// <returns></returns>
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         var (statusCode, errorMessages) = exception switch

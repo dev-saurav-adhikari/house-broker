@@ -8,6 +8,17 @@
 
     <ItemGroup>
       <ProjectReference Include="..\HouseBroker.Domain\HouseBroker.Domain.csproj" />
+        
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.AspNetCore.Http.Abstractions">
+        <HintPath>..\..\..\..\..\..\usr\local\share\dotnet\shared\Microsoft.AspNetCore.App\10.0.1\Microsoft.AspNetCore.Http.Abstractions.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
     </ItemGroup>
 
 </Project>

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseBroker.Application", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseBroker.Infrastructure", "HouseBroker.Infrastructure\HouseBroker.Infrastructure.csproj", "{F0583B34-B9E3-4D95-8A84-7C44AC172BDE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseBroker.Test", "HouseBroker.Test\HouseBroker.Test.csproj", "{C1F03DC3-C30B-45D6-907E-169478DA6526}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,5 +37,9 @@ Global
 		{F0583B34-B9E3-4D95-8A84-7C44AC172BDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F0583B34-B9E3-4D95-8A84-7C44AC172BDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F0583B34-B9E3-4D95-8A84-7C44AC172BDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1F03DC3-C30B-45D6-907E-169478DA6526}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1F03DC3-C30B-45D6-907E-169478DA6526}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1F03DC3-C30B-45D6-907E-169478DA6526}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1F03DC3-C30B-45D6-907E-169478DA6526}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

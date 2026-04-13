@@ -16,7 +16,7 @@ public class PropertyService(
 
 
 {
-    public async Task<Pagination<PropertyDto>> GetAllProperties(PropertyFilterDto filter)
+    public async Task<Pagination<PropertyWithBrokerInfoDto>> GetAllProperties(PropertyFilterDto filter)
     {
         var request = _httpContextAccessor.HttpContext?.Request;
         var baseUrl = $"{request?.Scheme}://{request.Host}";
@@ -43,7 +43,7 @@ public class PropertyService(
         // query build
         var query =  (from p in allProperties
             join r in brokers on p.BrokerId equals r.Id
-            select new PropertyDto
+            select new PropertyWithBrokerInfoDto
             {
                 Id = p.Id,
                 Description = p.Description,
@@ -61,9 +61,11 @@ public class PropertyService(
                 BrokerId = p.BrokerId,
                 BrokerName = r.Email,
                 EstimatedCommission = p.EstimatedCommission,
+                BrokerEmail = r.Email,
+                BrokerPhone = r.PhoneNumber,
             });
         // query execution and pagination
-        return new Pagination<PropertyDto>(query, filter.PageNumber, filter.PageSize);
+        return new Pagination<PropertyWithBrokerInfoDto>(query, filter.PageNumber, filter.PageSize);
     }
 
     public async Task InsertProperty(InsertPropertyDto property, long userId)

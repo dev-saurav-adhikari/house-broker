@@ -37,6 +37,7 @@ public static class ServiceExtension
         services.AddScoped<IPropertyService, PropertyService>();
         services.AddScoped<IProvinceService, ProvinceService>();
         services.AddScoped<IDistrictService, DistrictService>();
+        services.AddScoped<IBrokerService, BrokerService>();
         services.AddScoped<IFileService, FileService>();
 
         #endregion

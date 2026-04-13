@@ -1,6 +1,8 @@
+using System.Collections;
+
 namespace HouseBroker.Infrastructure.Services;
 
-public class Pagination<T>
+public class Pagination<T> 
 {
     public List<T> Items { get; set; }
     public int TotalCount { get; set; }
@@ -22,4 +24,5 @@ public class Pagination<T>
         CurrentPage = pageNumber;
         PageSize = pageSize;
     }
+    
 }

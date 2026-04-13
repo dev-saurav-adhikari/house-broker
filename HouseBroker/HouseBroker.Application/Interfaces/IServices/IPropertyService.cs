@@ -5,6 +5,6 @@ namespace HouseBroker.Application.Interfaces.IServices;
 
 public interface IPropertyService
 {
-    Task<Pagination<PropertyDto>> GetAllProperties(PropertyFilterDto filter);
+    Task<Pagination<PropertyWithBrokerInfoDto>> GetAllProperties(PropertyFilterDto filter);
     Task InsertProperty(InsertPropertyDto property, long userId);
 }

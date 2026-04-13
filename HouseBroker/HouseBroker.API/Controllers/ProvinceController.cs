@@ -13,7 +13,7 @@ namespace HouseBroker.API.Controllers;
 [Authorize]
 public class ProvinceController(IProvinceService _provinceService) : ControllerBase
 {
-    private long UserId => User.FindFirstValue("Id") != null ? long.Parse(User.FindFirstValue("Id")) : 0;
+    private long UserId => User.FindFirstValue("Id") != null ? long.Parse(User.FindFirstValue("Id")??string.Empty) : 0;
 
     [HttpGet]
     [AllowAnonymous]

@@ -1,3 +1,4 @@
+using HouseBroker.Application.CustomException;
 using HouseBroker.Application.DTOs;
 using HouseBroker.Application.Interfaces.IRepositories;
 using HouseBroker.Application.Interfaces.IServices;
@@ -11,16 +12,12 @@ namespace HouseBroker.Infrastructure.Services;
 public class PropertyService(
     IUnitOfWork _unitOfWork,
     UserManager<IdentityUser<long>> _userManager,
-    IFileService _fileService,
-    IHttpContextAccessor _httpContextAccessor) : IPropertyService
+    IFileService _fileService) : IPropertyService
 
 
 {
-    public async Task<Pagination<PropertyWithBrokerInfoDto>> GetAllProperties(PropertyFilterDto filter)
+    public Pagination<PropertyDetailWithBrokerInfoDto> GetAllProperties(PropertyFilterDto filter)
     {
-        var request = _httpContextAccessor.HttpContext?.Request;
-        var baseUrl = $"{request?.Scheme}://{request.Host}";
-        
         // fetch all available the properties
         var allProperties = _unitOfWork.PropertyRepository.FindByCondition(p => p.IsAvailable &&
             (string.IsNullOrWhiteSpace(filter.Search) || p.Title.Contains(filter.Search) ||
@@ -43,7 +40,7 @@ public class PropertyService(
         // query build
         var query =  (from p in allProperties
             join r in brokers on p.BrokerId equals r.Id
-            select new PropertyWithBrokerInfoDto
+            select new PropertyDetailWithBrokerInfoDto
             {
                 Id = p.Id,
                 Description = p.Description,
@@ -51,7 +48,7 @@ public class PropertyService(
                 Price = p.Price,
                 ImageUrl = string.IsNullOrEmpty(p.ImageUrl)
                     ? null
-                    : $"{baseUrl}{p.ImageUrl}",
+                    : _fileService.GetFileUrl(p.ImageUrl),
                 ProvinceId = p.ProvinceId,
                 Municipality = p.Municipality,
                 WardNumber = p.WardNumber,
@@ -65,34 +62,81 @@ public class PropertyService(
                 BrokerPhone = r.PhoneNumber,
             });
         // query execution and pagination
-        return new Pagination<PropertyWithBrokerInfoDto>(query, filter.PageNumber, filter.PageSize);
+        return new Pagination<PropertyDetailWithBrokerInfoDto>(query, filter.PageNumber, filter.PageSize);
     }
 
-    public async Task InsertProperty(InsertPropertyDto property, long userId)
+    public async Task InsertProperty(InsertPropertyDetailDto propertyDetail, long userId)
     {
         // upload file 
-        string imageUrl = await _fileService.SaveFileAsync(property.ImageFile);
+        string imageUrl = await _fileService.SaveFileAsync(propertyDetail.ImageFile);
 
         // add property
         var newProperty = new Property
         {
-            Description = property.Description,
-            PropertyType = property.PropertyType,
-            Price = property.Price,
+            Description = propertyDetail.Description,
+            PropertyType = propertyDetail.PropertyType,
+            Price = propertyDetail.Price,
             ImageUrl = imageUrl,
-            ProvinceId = property.ProvinceId,
-            Municipality = property.Municipality,
-            WardNumber = property.WardNumber,
-            DistrictId = property.DistrictId,
-            LandMark = property.LandMark,
-            Title = property.Title,
+            ProvinceId = propertyDetail.ProvinceId,
+            Municipality = propertyDetail.Municipality,
+            WardNumber = propertyDetail.WardNumber,
+            DistrictId = propertyDetail.DistrictId,
+            LandMark = propertyDetail.LandMark,
+            Title = propertyDetail.Title,
             CreatedBy = userId,
             BrokerId = userId,
             IsAvailable = true,
-            EstimatedCommission = await CommissionCalculation(property.Price) // commission calculation
+            EstimatedCommission = await CommissionCalculation(propertyDetail.Price) // commission calculation
         };
         // adding new property
         await _unitOfWork.PropertyRepository.AddAsync(newProperty);
+        await _unitOfWork.PropertyRepository.SaveChangesAsync();
+    }
+
+    public async Task UpdateProperty(long id, UpdatePropertyDto propertyDto, long userId)
+    {
+        var property = await _unitOfWork.PropertyRepository.GetByIdAsync(id);
+        if (property == null) throw new NotFoundException("Property not found");
+        if (property.BrokerId != userId) throw new UnauthorizedAccessException("You are not authorized to update this property");
+        
+        // data mapping 
+        property.Title = propertyDto.Title ?? property.Title;
+        property.Description = propertyDto.Description ?? property.Description;
+        property.ProvinceId = propertyDto.ProvinceId ?? property.ProvinceId;
+        property.DistrictId = propertyDto.DistrictId ?? property.DistrictId;
+        property.Municipality = propertyDto.Municipality ?? property.Municipality;
+        property.WardNumber = propertyDto.WardNumber ?? property.WardNumber;
+        property.LandMark = propertyDto.LandMark ?? property.LandMark;
+        property.PropertyType = propertyDto.PropertyType ?? property.PropertyType;
+        property.IsAvailable = propertyDto.IsAvailable ?? property.IsAvailable;
+        property.Price = propertyDto.Price ?? property.Price;
+        property.EstimatedCommission = await CommissionCalculation(property.Price);
+
+        // update image if provided
+        if (propertyDto.ImageFile != null)
+        {
+            if (!string.IsNullOrEmpty(property.ImageUrl))
+            {
+                _fileService.RemoveFile(property.ImageUrl);
+            }
+            property.ImageUrl = await _fileService.SaveFileAsync(propertyDto.ImageFile);
+        }
+
+        await _unitOfWork.PropertyRepository.SaveChangesAsync();
+    }
+
+    public async Task DeleteProperty(long id, long userId)
+    {
+        var property = await _unitOfWork.PropertyRepository.GetByIdAsync(id);
+        if (property == null) throw new NotFoundException("Property not found");
+        if (property.BrokerId != userId) throw new UnauthorizedAccessException("You are not authorized to delete this property");
+
+        if (!string.IsNullOrEmpty(property.ImageUrl))
+        {
+            _fileService.RemoveFile(property.ImageUrl);
+        }
+
+        _unitOfWork.PropertyRepository.Delete(property);
         await _unitOfWork.PropertyRepository.SaveChangesAsync();
     }
 

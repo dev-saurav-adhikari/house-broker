@@ -17,10 +17,10 @@ public class BrokerPropertiesDto
     public required string UserName { get; set; }
     public required string Email { get; set; }
     public required string PhoneNumber { get; set; }
-    public Pagination<BrokerPropertyDto>? Properties { get; set; } = null;
+    public Pagination<BrokerPropertyDetailDto>? Properties { get; set; } = null;
 }
 
-public class BrokerPropertyDto : PropertyDto
+public class BrokerPropertyDetailDto : PropertyDetailDto
 {
     public long Id { get; set; }
     public bool IsAvailable { get; set; }

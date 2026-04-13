@@ -1,16 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HouseBroker.Application.Attribute;
 using Microsoft.AspNetCore.Http;
 using HouseBroker.Domain.Enums;
 
 namespace HouseBroker.Application.DTOs;
 
-public class InsertPropertyDto : PropertyDto
+public class InsertPropertyDetailDto : PropertyDetailDto
 {
+    [AllowedExtension([".jpg", ".jpeg", ".png"], ErrorMessage = "Please upload a valid image file.")]
     public required IFormFile ImageFile { get; set; }
 }
 
-public class PropertyWithBrokerInfoDto : PropertyDto
+public class PropertyDetailWithBrokerInfoDto : PropertyDetailDto
 {
     public long Id { get; set; }
     public long BrokerId { get; set; }
@@ -41,11 +43,11 @@ public class PropertyFilterDto
     [Range(0, double.MaxValue)]
     public decimal? MaxPrice { get; set; }
 
-    public int PageSize { get; set; } = 1;
-    public int PageNumber { get; set; } = 10;
+    public int PageSize { get; set; } = 10;
+    public int PageNumber { get; set; } = 1;
 }
 
-public class PropertyDto
+public class PropertyDetailDto
 {
         [StringLength(200)]
         public string Title { get; set; } = string.Empty;
@@ -71,4 +73,20 @@ public class PropertyDto
         public decimal Price { get; set; }
         public PropertyTypeEnum PropertyType { get; set; } 
     
+}
+
+public class UpdatePropertyDto
+{
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    [AllowedExtension([".jpg", ".jpeg", ".png"], ErrorMessage = "Please upload a valid image file.")]
+    public IFormFile? ImageFile { get; set; }
+    public long? ProvinceId { get; set; }
+    public long? DistrictId { get; set; }
+    public string? Municipality { get; set; }
+    public int? WardNumber { get; set; }
+    public string? LandMark { get; set; }
+    public decimal? Price { get; set; }
+    public PropertyTypeEnum? PropertyType { get; set; }
+    public bool? IsAvailable { get; set; }
 }

@@ -66,7 +66,7 @@ public class BrokerService(
                                                                          p.Title.Contains(filter.Search) ||
                                                                          p.Description.Contains(filter.Search)));
 
-        var projectedQuery = query.Select(p => new BrokerPropertyDto
+        var projectedQuery = query.Select(p => new BrokerPropertyDetailDto
         {
             Id = p.Id,
             Description = p.Description,
@@ -82,7 +82,7 @@ public class BrokerService(
             EstimatedCommission = p.EstimatedCommission
         });
 
-        var properties =  new Pagination<BrokerPropertyDto>(projectedQuery, filter.PageNumber, filter.PageSize);
+        var properties =  new Pagination<BrokerPropertyDetailDto>(projectedQuery, filter.PageNumber, filter.PageSize);
         var brokerProperties =  new BrokerPropertiesDto
         {
             Properties = properties,

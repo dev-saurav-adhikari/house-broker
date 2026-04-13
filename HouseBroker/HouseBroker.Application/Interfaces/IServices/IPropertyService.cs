@@ -5,6 +5,8 @@ namespace HouseBroker.Application.Interfaces.IServices;
 
 public interface IPropertyService
 {
-    Task<Pagination<PropertyWithBrokerInfoDto>> GetAllProperties(PropertyFilterDto filter);
-    Task InsertProperty(InsertPropertyDto property, long userId);
+    Pagination<PropertyDetailWithBrokerInfoDto> GetAllProperties(PropertyFilterDto filter);
+    Task InsertProperty(InsertPropertyDetailDto propertyDetail, long userId);
+    Task UpdateProperty(long id, UpdatePropertyDto property, long userId);
+    Task DeleteProperty(long id, long userId);
 }

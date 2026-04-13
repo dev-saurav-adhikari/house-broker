@@ -19,17 +19,31 @@ namespace HouseBroker.API.Controllers
         
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllProperties([FromQuery]PropertyFilterDto filter)
+        public IActionResult GetAllProperties([FromQuery]PropertyFilterDto filter)
         {
-            var properties = await _propertyService.GetAllProperties(filter);
+            var properties = _propertyService.GetAllProperties(filter);
             return Ok(new APIResponse(properties));
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddProperties([FromForm]InsertPropertyDto propertyDto)
+        public async Task<IActionResult> AddProperties([FromForm]InsertPropertyDetailDto propertyDetailDto)
         {
-            await _propertyService.InsertProperty(propertyDto, UserId);
+            await _propertyService.InsertProperty(propertyDetailDto, UserId);
             return Ok(new APIResponse("Property added successfully"));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProperty(long id, [FromForm]UpdatePropertyDto propertyDto)
+        {
+            await _propertyService.UpdateProperty(id, propertyDto, UserId);
+            return Ok(new APIResponse("Property updated successfully"));
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProperty(long id)
+        {
+            await _propertyService.DeleteProperty(id, UserId);
+            return Ok(new APIResponse("Property deleted successfully"));
         }
     }
 }

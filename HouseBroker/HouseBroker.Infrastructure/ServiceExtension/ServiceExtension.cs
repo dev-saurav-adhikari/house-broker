@@ -39,6 +39,14 @@ public static class ServiceExtension
         services.AddScoped<IDistrictService, DistrictService>();
         services.AddScoped<IBrokerService, BrokerService>();
         services.AddScoped<IFileService, FileService>();
+        services.AddScoped<ICommissionService, CommissionService>();
+        
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis");
+            options.InstanceName = "HouseBroker_";
+        });
+        services.AddTransient<ICacheService, RedisCacheService>();
 
         #endregion
     }

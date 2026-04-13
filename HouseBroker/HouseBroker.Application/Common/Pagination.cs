@@ -9,6 +9,8 @@ public class Pagination<T>
     public int CurrentPage { get; set; }
     public int PageSize { get; set; }
 
+    public Pagination() {}
+
     public Pagination(List<T> items, int totalCount, int currentPage, int pageSize)
     {
         Items = items;

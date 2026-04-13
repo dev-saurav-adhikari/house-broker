@@ -6,18 +6,31 @@ using HouseBroker.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using HouseBroker.Application.Constants;
 
 namespace HouseBroker.Infrastructure.Services;
 
 public class PropertyService(
     IUnitOfWork _unitOfWork,
     UserManager<IdentityUser<long>> _userManager,
+    ICacheService _cacheService,
+    ICommissionService _commissionService,
     IFileService _fileService) : IPropertyService
-
-
 {
-    public Pagination<PropertyDetailWithBrokerInfoDto> GetAllProperties(PropertyFilterDto filter)
+    public async Task<Pagination<PropertyDetailWithBrokerInfoDto>> GetAllPropertiesAsync(PropertyFilterDto filter)
     {
+        // get current version
+        int version = await _cacheService.GetOrSetVersionAsync(CacheKeys.PropertiesVersionKey);
+        
+        // generate versioned cache key
+        string cacheKey = CacheKeys.AllProperties(version, filter);
+        
+        // check cache
+        var cachedProperties = await _cacheService.GetAsync<Pagination<PropertyDetailWithBrokerInfoDto>>(cacheKey);
+        
+        if (cachedProperties != null)
+            return cachedProperties;
+
         // fetch all available the properties
         var allProperties = _unitOfWork.PropertyRepository.FindByCondition(p => p.IsAvailable &&
             (string.IsNullOrWhiteSpace(filter.Search) || p.Title.Contains(filter.Search) ||
@@ -62,7 +75,12 @@ public class PropertyService(
                 BrokerPhone = r.PhoneNumber,
             });
         // query execution and pagination
-        return new Pagination<PropertyDetailWithBrokerInfoDto>(query, filter.PageNumber, filter.PageSize);
+        var pagination = new Pagination<PropertyDetailWithBrokerInfoDto>(query, filter.PageNumber, filter.PageSize);
+        
+        // store under the versioned key (expires in 10 mins, old versions naturally expire too)
+        await _cacheService.SetAsync(cacheKey, pagination, TimeSpan.FromMinutes(10));
+        
+        return pagination;
     }
 
     public async Task InsertProperty(InsertPropertyDetailDto propertyDetail, long userId)
@@ -86,11 +104,15 @@ public class PropertyService(
             CreatedBy = userId,
             BrokerId = userId,
             IsAvailable = true,
-            EstimatedCommission = await CommissionCalculation(propertyDetail.Price) // commission calculation
+            EstimatedCommission = await _commissionService.CalculateCommissionAsync(propertyDetail.Price)
         };
         // adding new property
         await _unitOfWork.PropertyRepository.AddAsync(newProperty);
         await _unitOfWork.PropertyRepository.SaveChangesAsync();
+        
+        // Invalidate caches
+        await _cacheService.RemoveAsync(CacheKeys.BrokerProperties(userId));
+        await _cacheService.IncrementVersionAsync(CacheKeys.PropertiesVersionKey);
     }
 
     public async Task UpdateProperty(long id, UpdatePropertyDto propertyDto, long userId)
@@ -110,7 +132,7 @@ public class PropertyService(
         property.PropertyType = propertyDto.PropertyType ?? property.PropertyType;
         property.IsAvailable = propertyDto.IsAvailable ?? property.IsAvailable;
         property.Price = propertyDto.Price ?? property.Price;
-        property.EstimatedCommission = await CommissionCalculation(property.Price);
+        property.EstimatedCommission = await _commissionService.CalculateCommissionAsync(property.Price);
 
         // update image if provided
         if (propertyDto.ImageFile != null)
@@ -123,6 +145,10 @@ public class PropertyService(
         }
 
         await _unitOfWork.PropertyRepository.SaveChangesAsync();
+
+        // Invalidate caches
+        await _cacheService.RemoveAsync(CacheKeys.BrokerProperties(userId));
+        await _cacheService.IncrementVersionAsync(CacheKeys.PropertiesVersionKey);
     }
 
     public async Task DeleteProperty(long id, long userId)
@@ -138,22 +164,9 @@ public class PropertyService(
 
         _unitOfWork.PropertyRepository.Delete(property);
         await _unitOfWork.PropertyRepository.SaveChangesAsync();
-    }
-
-    private async Task<decimal> CommissionCalculation(decimal price)
-    {
-        if (price <= 0) return 0;
-
-        var tiers = await _unitOfWork.CommissionRepository.GetAll();
-
-        // find the tier where price is greater than the min and less or equal to the max
-        var matchingTier = tiers.FirstOrDefault(t =>
-            (price > t.MinimumAmount || (t.MinimumAmount == 0 && price >= 0)) &&
-            (t.MaximumAmount <= 0 || price <= (decimal)t.MaximumAmount));
-
-        if (matchingTier == null) return 0;
-
-        var commission = price * (matchingTier.Rate / 100);
-        return Math.Round(commission, 2, MidpointRounding.AwayFromZero);
+        
+        // Invalidate caches
+        await _cacheService.RemoveAsync(CacheKeys.BrokerProperties(userId));
+        await _cacheService.IncrementVersionAsync(CacheKeys.PropertiesVersionKey);
     }
 }

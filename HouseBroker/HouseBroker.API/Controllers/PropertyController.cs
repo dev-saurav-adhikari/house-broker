@@ -19,9 +19,9 @@ namespace HouseBroker.API.Controllers
         
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult GetAllProperties([FromQuery]PropertyFilterDto filter)
+        public async Task<IActionResult> GetAllProperties([FromQuery]PropertyFilterDto filter)
         {
-            var properties = _propertyService.GetAllProperties(filter);
+            var properties = await _propertyService.GetAllPropertiesAsync(filter);
             return Ok(new APIResponse(properties));
         }
 

@@ -1,5 +1,7 @@
 using HouseBroker.Application.Middlewares;
+using HouseBroker.Infrastructure.Persistence;
 using HouseBroker.Infrastructure.ServiceExtension;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,10 +19,11 @@ builder.Services.JwtConfiguration(builder.Configuration);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || true)
 {
     app.MapOpenApi();
 }
+
 var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
 if (!Directory.Exists(uploadPath))
 {
@@ -33,6 +36,11 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(uploadPath),
     RequestPath = "/content"
 });
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<HouseBrokerDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.UseCors();

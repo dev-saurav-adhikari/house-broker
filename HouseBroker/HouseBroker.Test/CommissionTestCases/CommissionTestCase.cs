@@ -174,8 +174,6 @@ public class CommissionTestCase : IClassFixture<ServiceCollectionFixture>
         (await _service.CalculateCommissionAsync(100.125m)).ShouldBe(2m); 
     }
 
-  
-
     [Fact]
     public async Task DeleteAsync_ShouldRemoveAndInvalidateCache()
     {

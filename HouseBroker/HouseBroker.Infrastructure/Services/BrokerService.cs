@@ -94,4 +94,9 @@ public class BrokerService(
         return brokerProperties;
 
     }
+
+    public async Task<decimal> TotalEstimatedCommissionAsync(long brokerId)
+    {
+        return await _unitOfWork.PropertyRepository.FindByCondition(p => p.BrokerId == brokerId).SumAsync(x=>x.EstimatedCommission);
+    }
 }

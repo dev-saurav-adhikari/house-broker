@@ -14,7 +14,8 @@ namespace HouseBroker.API.Controllers;
 [Authorize]
 public class BrokerController(IBrokerService _brokerService) : ControllerBase
 {
-    private long UserId => User.FindFirstValue("Id") != null ? long.Parse(User.FindFirstValue("Id") ?? string.Empty) : 0;
+    private long UserId =>
+        User.FindFirstValue("Id") != null ? long.Parse(User.FindFirstValue("Id") ?? string.Empty) : 0;
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] BasicFilterDto filter)
@@ -31,6 +32,7 @@ public class BrokerController(IBrokerService _brokerService) : ControllerBase
         {
             return NotFound(new APIResponse(null, ["Broker not found"], HttpStatusCode.NotFound));
         }
+
         return Ok(new APIResponse(result));
     }
 
@@ -39,5 +41,12 @@ public class BrokerController(IBrokerService _brokerService) : ControllerBase
     {
         var result = await _brokerService.GetPropertiesByBrokerIdAsync(UserId, filter);
         return Ok(new APIResponse(result));
+    }
+
+    [HttpGet("total-estimated-commission")]
+    public async Task<IActionResult> GetTotalEstimatedCommission()
+    {
+        var amount = await _brokerService.TotalEstimatedCommissionAsync(UserId);
+        return Ok(new APIResponse(amount));
     }
 }

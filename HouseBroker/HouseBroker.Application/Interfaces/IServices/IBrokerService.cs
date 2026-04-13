@@ -9,4 +9,5 @@ public interface IBrokerService
     Task<Pagination<BrokerDto>> GetBrokersAsync(BasicFilterDto filter);
     Task<BrokerDto?> GetBrokerByIdAsync(long id);
     Task<BrokerPropertiesDto> GetPropertiesByBrokerIdAsync(long brokerId, BasicFilterDto filter);
+    Task<decimal> TotalEstimatedCommissionAsync(long brokerId);
 }

@@ -103,6 +103,14 @@ Docker is a platform that uses containerization to package an application and al
 3. **Wait for Services:** Wait for the containers to be built and started.
 4. **Access API:** Once running, you can access the application at: [http://localhost:5107/openapi/v1.json](http://localhost:5107/openapi/v1.json)
 
+Here is the seed user credentails:
+Broker:
+email: broker@example.com
+password: Broker123!
+
+House Seeker:
+email: seeker@example.com
+password: Seeker123!
 ---
 
 ## Conclusion

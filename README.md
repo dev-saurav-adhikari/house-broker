@@ -45,14 +45,11 @@ CleanArchitecture.slnx
 │
 ├── CleanArchitecture.Domain/       ← Innermost layer (zero dependencies)
 │   ├── Entities/                   ← Objects with identity (e.g., TodoList, TodoItem)
-│   ├── Enums/                      ← Strongly typed enumerations
-│   ├── ValueObjects/               ← Immutable objects defined by their values
-│   └── Events/                     ← Domain events
+│   └── Enums/                      ← Strongly typed enumerations
 │
 ├── CleanArchitecture.Application/   ← Business logic (depends on Domain)
 │   ├── DTOs/
-│   ├── Interfaces/
-│   └── UseCases/
+│   └── Interfaces/
 │
 ├── CleanArchitecture.Infrastructure/ ← Data access (depends on Application)
 │   ├── Persistence/
@@ -60,7 +57,7 @@ CleanArchitecture.slnx
 │   ├── Repositories/
 │   ├── Services/
 │   ├── Migrations/
-│   └── DependencyInjection.cs
+│   └── ServiceExtension/
 │
 └── CleanArchitecture.Presentation/  ← Presentation layer (depends on Application + Infrastructure)
     ├── Controllers/
@@ -94,7 +91,7 @@ Unit Testing is a software verification technique where individual components or
 To fulfill the requirements for easy setup and consistent database configuration, this project has been fully **Dockerized**.
 
 ### What is Docker?
-Docker is a platform that uses containerization to package an application and all of its required dependencies—including the .NET API, the MSSQL database, and the Redis cache—into standardized units called containers.
+Docker is a platform that uses containerization to package an application and all of its required dependencies—including the .NET, the MSSQL database, and the Redis cache—into standardized units called containers.
 
 ### Steps to Run:
 

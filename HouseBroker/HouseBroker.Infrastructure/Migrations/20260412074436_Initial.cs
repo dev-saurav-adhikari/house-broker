@@ -165,8 +165,8 @@ namespace HouseBroker.Infrastructure.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { 1L, "4d585e78-725b-455b-bde4-4363f905e576", "HouseSeeker", "HOUSESEEKER" },
-                    { 2L, "cdfbd862-6180-434e-892e-e1658f8b4c64", "Broker", "BROKER" }
+                    { 2L, "4d585e78-725b-455b-bde4-4363f905e576", "HouseSeeker", "HOUSESEEKER" },
+                    { 1L, "cdfbd862-6180-434e-892e-e1658f8b4c64", "Broker", "BROKER" }
                 });
 
             migrationBuilder.InsertData(

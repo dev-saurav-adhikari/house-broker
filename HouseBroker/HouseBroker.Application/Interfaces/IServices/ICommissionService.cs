@@ -11,8 +11,7 @@ public interface ICommissionService
     Task DeleteAsync(long id);
     
     /// <summary>
-    /// Calculates commission for a given price based on cached commission tiers.
-    /// Called by PropertyService during Insert/Update.
+    /// Calculates commission for a given price based on commission settings.
     /// </summary>
     Task<decimal> CalculateCommissionAsync(decimal price);
 }

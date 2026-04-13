@@ -18,13 +18,8 @@ public class BrokerService(
 {
     public async Task<Pagination<BrokerDto>> GetBrokersAsync(BasicFilterDto filter)
     {
-        var brokerRole = await _roleManager.FindByNameAsync("BROKER");
-        if (brokerRole == null)
-        {
-            return new Pagination<BrokerDto>(new List<BrokerDto>(), 0, filter.PageNumber, filter.PageSize);
-        }
-
-        var query = _userManager.Users.Where(p =>
+        var userWithBrokerRole = (await _userManager.GetUsersInRoleAsync("BROKER")).AsQueryable();
+        var query = userWithBrokerRole.Where(p =>
             (string.IsNullOrWhiteSpace(filter.Search)
              || p.Email!.Contains(filter.Search)
              || p.UserName!.Contains(filter.Search))).Select(s => new BrokerDto
